@@ -239,7 +239,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
       <button id="logoutBtn">Se déconnecter</button>
     </div>
     <div class="msg" id="dataMsg"></div>
-    <p class="sub" style="margin:8px 0 0;font-size:11px">Version 3 · synchronisée</p>
+    <p class="sub" style="margin:8px 0 0;font-size:11px">Version 4 · synchronisée</p>
   </section>
 </div>
 
@@ -411,7 +411,7 @@ window.addEventListener('unhandledrejection',e=>{ const m=document.getElementByI
     if(query){ const q=query.toLowerCase();
       return entries.filter(e=>[e.client,e.machine,e.report,e.work,e.note].some(v=>String(v||'').toLowerCase().includes(q))).sort((x,y)=>y.start-x.start); }
     const [a,b]=range(period); return entries.filter(e=>e.start>=a && e.start<b).sort((x,y)=>y.start-x.start); }
-  const minutes = e => (e.end-e.start)/60000;
+  function minutes(e){ return (e.end-e.start)/60000; }
 
   // ---- render ----
   function renderAll(){ renderTimer(); renderClients(); renderList(); }
