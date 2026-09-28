@@ -156,7 +156,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
           <input id="machine" list="machineList" autocomplete="off" placeholder="p. ex. Mikron HSM 400">
         </label>
         <label for="report">N° de rapport
-          <div class="pfx"><span>MTS-</span><input id="report" autocomplete="off" inputmode="numeric" placeholder="0001"></div>
+          <div class="pfx"><span>MTS-2026-</span><input id="report" autocomplete="off" inputmode="numeric" placeholder="00057"></div>
         </label>
         <label for="work">Travail
           <select id="work"><option value="">— Choisir —</option><option>Maintenance préventive</option><option>Maintenance corrective / Réparation</option><option>Mise en service / Installation</option><option>Dépannage / Diagnostic</option><option>Contrôle qualité / Vérification</option><option>Intervention sous garantie</option><option>Modification / Amélioration</option><option>Audit Technique / Inspection</option></select>
@@ -202,7 +202,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
 
   <section class="panel">
     <div class="headrow"><h2>Pointages</h2><span class="sub" id="periodLabel"></span></div>
-    <div style="margin-bottom:12px"><input id="search" class="search" type="search" autocomplete="off" placeholder="Rechercher : MTS-0142, client, machine…" aria-label="Rechercher un pointage"></div>
+    <div style="margin-bottom:12px"><input id="search" class="search" type="search" autocomplete="off" placeholder="Rechercher : MTS-2026-00057, client, machine…" aria-label="Rechercher un pointage"></div>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Client</th><th class="hide-s">Début</th><th class="hide-s">Fin</th><th class="num">Durée</th><th></th></tr></thead>
@@ -214,7 +214,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
       <form class="manual" id="manualForm">
         <label for="mClient">Client<input id="mClient" list="clientList" autocomplete="off" required></label>
         <label for="mMachine">Type de machine<input id="mMachine" list="machineList" autocomplete="off"></label>
-        <label for="mReport">N° de rapport<div class="pfx"><span>MTS-</span><input id="mReport" autocomplete="off" inputmode="numeric"></div></label>
+        <label for="mReport">N° de rapport<div class="pfx"><span>MTS-2026-</span><input id="mReport" autocomplete="off" inputmode="numeric"></div></label>
         <label for="mWork">Travail<select id="mWork"><option value="">— Choisir —</option><option>Maintenance préventive</option><option>Maintenance corrective / Réparation</option><option>Mise en service / Installation</option><option>Dépannage / Diagnostic</option><option>Contrôle qualité / Vérification</option><option>Intervention sous garantie</option><option>Modification / Amélioration</option><option>Audit Technique / Inspection</option></select></label>
         <label for="mTravel">Trajet (minutes)<input id="mTravel" type="number" min="0" step="5" inputmode="numeric"></label>
         <label for="mKm">Km<input id="mKm" type="number" min="0" step="1" inputmode="numeric"></label>
@@ -239,7 +239,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
       <button id="logoutBtn">Se déconnecter</button>
     </div>
     <div class="msg" id="dataMsg"></div>
-    <p class="sub" style="margin:8px 0 0;font-size:11px">Version 4 · synchronisée</p>
+    <p class="sub" style="margin:8px 0 0;font-size:11px">Version 5 · synchronisée</p>
   </section>
 </div>
 
@@ -255,9 +255,14 @@ window.addEventListener('unhandledrejection',e=>{ const m=document.getElementByI
   const fmtTime = t => { const d=new Date(t); return pad(d.getHours())+':'+pad(d.getMinutes()); };
   const dayKey = t => { const d=new Date(t); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
   const dayLabel = t => new Date(t).toLocaleDateString('fr-CH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const rep = v => { v=String(v||'').trim().replace(/^MTS-?/i,''); return v?'MTS-'+v:''; };
-  const num = v => { const n=parseFloat(String(v).replace(',','.')); return isFinite(n)&&n>0?Math.round(n):0; };
-  const repNum = v => String(v||'').replace(/^MTS-/,'');
+  const YEAR = new Date().getFullYear();
+  const rep = v => { let t=String(v||'').trim().replace(/^(SR|MTS)-?/i,'');
+    if(!t) return '';
+    let m=t.match(/^(\d{4})-(\d{1,5})$/); if(m) return 'MTS-'+m[1]+'-'+m[2].padStart(5,'0');
+    if(/^\d{1,5}$/.test(t)) return 'MTS-'+YEAR+'-'+t.padStart(5,'0');
+    return 'MTS-'+t; };
+  const repNum = v => { const s=String(v||''); const p='MTS-'+YEAR+'-'; return s.startsWith(p)? s.slice(p.length) : s.replace(/^(SR|MTS)-/,''); };
+  document.querySelectorAll('.pfx span').forEach(el=>el.textContent='MTS-'+YEAR+'-');
   $('today').textContent = new Date().toLocaleDateString('fr-CH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   let entries = [];      // {id, client, note, start, end}

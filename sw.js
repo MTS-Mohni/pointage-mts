@@ -1,5 +1,5 @@
 // Pointage MTS – fonctionnement hors ligne
-const CACHE = 'pointage-mts-v4-sync';
+const CACHE = 'pointage-mts-v5-sync';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './firebase-bundle.js'];
 
 self.addEventListener('install', e => {
