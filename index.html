@@ -239,10 +239,13 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
       <button id="logoutBtn">Se déconnecter</button>
     </div>
     <div class="msg" id="dataMsg"></div>
+    <p class="sub" style="margin:8px 0 0;font-size:11px">Version 3 · synchronisée</p>
   </section>
 </div>
 
 <script>
+window.addEventListener('error',e=>{ const m=document.getElementById('timerMsg'); if(m){ m.textContent='Erreur : '+(e.message||e.type); m.className='msg err'; } });
+window.addEventListener('unhandledrejection',e=>{ const m=document.getElementById('timerMsg'); if(m){ const r=e.reason||{}; m.textContent='Erreur : '+(r.code||r.message||r); m.className='msg err'; } });
 (function(){
   const $ = id => document.getElementById(id);
   const pad = n => String(n).padStart(2,'0');
@@ -281,7 +284,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
     appId: "1:621353453478:web:4ab9f398e82cfc546f3167"
   };
   let F=null, fs=null, auth=null, uid=null, unsubs=[];
-  const syncFail = err => { console.error(err); setMsg($('timerMsg'),'Synchronisation refusée ('+(err&&err.code||'erreur')+'). Vérifiez que vous êtes connecté avec le bon compte.','err'); };
+  const syncFail = err => { console.error(err); setSync('Erreur de synchronisation','off'); setMsg($('timerMsg'),'Synchronisation refusée ('+(err&&err.code||'erreur')+'). Vérifiez que vous êtes connecté avec le bon compte.','err'); };
   const fire = pr => { if(pr && pr.catch) pr.catch(syncFail); };
   const eRef = id => F.doc(fs,'users',uid,'entries',id);
   const newRef = () => F.doc(F.collection(fs,'users',uid,'entries'));
@@ -321,7 +324,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
 
   function showLogin(show){ $('login').hidden=!show; document.querySelector('.wrap').hidden=show; }
   function startCloud(user){
-    uid=user.uid; db=true; $('who').textContent=user.email||'';
+    uid=user.uid; db=true; $('who').textContent=user.email||''; setSync('Chargement des pointages…','wait');
     entries=[]; timer=null; renderAll();
     unsubs.push(F.onSnapshot(F.collection(fs,'users',uid,'entries'),{includeMetadataChanges:true},snap=>{
       entries=snap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>typeof e.start==='number'&&typeof e.end==='number');
@@ -347,6 +350,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
       const app=F.initializeApp(FIREBASE_CONFIG);
       fs=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
       auth=F.getAuth(app);
+      setSync('Connexion au compte…','wait');
       F.onAuthStateChanged(auth,user=>{
         if(user){ if(uid!==user.uid){ stopCloud(); startCloud(user); } }
         else { stopCloud(); showLogin(true); }
@@ -521,7 +525,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
         $('note').value=''; $('work').value=''; $('machine').value=''; $('report').value=''; $('travel').value=''; $('km').value='';
         setMsg($('timerMsg'),'Enregistré : '+client+' · '+fmtHM(minutes(e))+'.','ok');
       }
-    }catch(err){ setMsg($('timerMsg'),errText(err),'err'); }
+    }catch(err){ setMsg($('timerMsg'),'Erreur : '+(err&&(err.code||err.message)||err),'err'); }
     finally{ busy=false; }
   };
 
