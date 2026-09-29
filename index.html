@@ -239,7 +239,7 @@ details summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:50
       <button id="logoutBtn">Se déconnecter</button>
     </div>
     <div class="msg" id="dataMsg"></div>
-    <p class="sub" style="margin:8px 0 0;font-size:11px">Version 5 · synchronisée</p>
+    <p class="sub" style="margin:8px 0 0;font-size:11px">Version 6 · synchronisée</p>
   </section>
 </div>
 
@@ -249,6 +249,7 @@ window.addEventListener('unhandledrejection',e=>{ const m=document.getElementByI
 (function(){
   const $ = id => document.getElementById(id);
   const pad = n => String(n).padStart(2,'0');
+  const num = v => { const n=parseFloat(String(v??'').replace(',','.')); return isFinite(n)&&n>0?Math.round(n):0; };
   const fmtHMS = ms => { const s=Math.max(0,Math.floor(ms/1000)); return pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60); };
   const fmtHM = min => { const m=Math.round(min); return Math.floor(m/60)+' h '+pad(m%60); };
   const dec = min => (Math.round(min/60*100)/100).toFixed(2);
