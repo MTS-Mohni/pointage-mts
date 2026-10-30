@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Appel MTS</title>
+<meta name="theme-color" content="#111018">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" sizes="192x192" href="icon-192.png">
+<style>
+:root{--bg:#111018;--panel:#1c1b26;--panel2:#262535;--line:#34334a;--txt:#f2f2f6;--mut:#9a9bb0;--red:#E84227;--grn:#2fa866;--org:#e0a030}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.35 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+main{max-width:560px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom))}
+h1{font-size:21px;margin:4px 0 12px;display:flex;align-items:center;gap:8px}h1 .h{margin-left:auto;font-size:14px;color:var(--mut);font-weight:500}
+.lbl{font-size:13px;color:var(--mut);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+input,textarea{width:100%;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:18px;font-family:inherit}
+input:focus,textarea:focus{outline:2px solid var(--red);border-color:transparent}
+textarea{min-height:84px;resize:vertical}
+.liste{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:31vh;overflow:auto}
+.cli{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:17px;text-align:left;color:var(--txt);width:100%}
+.cli small{display:block;color:var(--mut);font-size:13px}.cli .r{margin-left:auto;font-size:12px;color:var(--org);white-space:nowrap}
+.choisi{display:flex;align-items:center;gap:10px;background:#2a1712;border:1px solid var(--red);border-radius:12px;padding:12px 14px;font-size:18px;font-weight:600}
+.choisi small{display:block;font-weight:400;color:var(--mut);font-size:13px}.choisi button{margin-left:auto;background:none;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:8px 12px;font-size:14px}
+.puces{display:flex;flex-wrap:wrap;gap:8px}
+.puce{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:999px;padding:11px 16px;font-size:16px}
+.puce.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}.puce.arr.on{background:#b3261e}
+.boutons{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.gros{border:0;border-radius:14px;padding:19px;font-size:20px;font-weight:700;color:#fff;background:var(--grn)}
+.gros.b2{background:var(--panel2);color:var(--txt);font-size:17px;font-weight:600;padding:15px}
+.gros:disabled{opacity:.5}
+.aide{color:var(--mut);font-size:13px;margin-top:6px}
+.err{color:#ff8a73;font-size:14px;margin-top:8px;min-height:1em}
+.attente{background:#2c2410;border:1px solid var(--org);color:#ffd27a;border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:10px;display:none}
+.fait{display:none;text-align:center;padding:40px 10px}.fait .ic{font-size:64px}.fait h2{margin:10px 0 6px;font-size:22px}.fait p{color:var(--mut);margin:0 0 24px}
+.vide{color:var(--mut);font-size:14px;padding:8px 2px}
+.etat{font-size:12px;color:var(--mut);margin:-6px 0 10px}.etat.ok{color:#6fcf8f}.etat.att{color:#ffd27a}
+#login{display:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:10px 0}#login p{margin:0 0 10px;color:var(--mut);font-size:14px}#login input{margin-bottom:8px}
+</style></head>
+<body><main>
+<div id="form">
+  <h1>📞 Appel client <span class="h" id="heure"></span></h1>
+  <div class="etat" id="etat">Connexion…</div>
+  <form id="login"><p>Connexion une seule fois, avec le compte de Pointage MTS.</p>
+    <input id="lEmail" type="email" value="info@mt-s.ch" autocomplete="username"><input id="lPass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+    <button class="gros" style="width:100%" type="submit">Se connecter</button><div class="err" id="lErr"></div></form>
+
+  <div class="lbl">Client</div>
+  <div id="zoneChoix">
+    <input id="q" type="search" placeholder="Nom du client" autocomplete="off" autocapitalize="words" enterkeyhint="search">
+    <div class="liste" id="liste"><div class="vide">Chargement des clients…</div></div>
+  </div>
+  <div id="zoneChoisi" style="display:none"></div>
+
+  <div class="lbl">Ce qu'il veut</div>
+  <textarea id="txt" placeholder="Touchez ici puis le 🎤 du clavier pour dicter (ex. « erreur changeur d'outil, je passe jeudi »)"></textarea>
+
+  <div class="lbl">Type</div>
+  <div class="puces" id="types">
+    <button class="puce on" data-t="Panne">🔧 Panne</button><button class="puce" data-t="Maintenance">🛠 Maintenance</button>
+    <button class="puce" data-t="Demande d'offre">💰 Offre</button><button class="puce" data-t="Question / support">❓ Question</button>
+    <button class="puce arr" id="arret">⛔ Machine à l'arrêt</button>
+  </div>
+
+  <div class="boutons">
+    <button class="gros" id="ok">✓ Noté + répondu</button>
+    <button class="gros b2" id="ok2">📝 Noter seulement (je rappelle)</button>
+  </div>
+  <div class="err" id="err"></div>
+  <div class="aide">Marche sans le PC et même sans réseau : l'appel part tout seul dès que possible et arrive dans l'Accueil (Demandes clients) quand le PC est allumé. La machine et le reste se complètent à la maison (✏ Compléter).</div>
+</div>
+
+<div class="fait" id="fait"><div class="ic">✅</div><h2 id="faitT">Noté</h2><p id="faitP"></p><button class="gros" id="encore" style="width:100%">📞 Nouvel appel</button></div>
+</main>
+<script type="module">
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+const sans = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const lire = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e) { return d; } };
+const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
+const isoLocal = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+const nouvId = () => "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+// noms officiels des clients (Bexio), les mêmes que dans Pointage MTS (gardés sur le téléphone)
+let NOMS = lire("mts_clients_officiels", []) || [];
+let CHOIX = null, TYPE = "Panne", ARRET = false;
+const RECENTS = lire("mts-appel-recents", []);
+
+function heure(){ const d = new Date(); $("#heure").textContent = d.toLocaleDateString("fr-CH", {weekday:"short", day:"2-digit", month:"2-digit"}) + " " + d.toTimeString().slice(0, 5); }
+heure(); setInterval(heure, 20000);
+
+function dessiner(){
+  const q = $("#q").value.trim(), qs = sans(q);
+  let l;
+  if (!q) {
+    l = RECENTS.slice(0, 6).map(n => ({nom:n, recent:true}));
+    if (!l.length) { $("#liste").innerHTML = '<div class="vide">' + (NOMS.length ? "Tapez les premières lettres du client." : "Liste des clients pas encore reçue : tapez le nom.") + '</div>'; return; }
+  } else {
+    const mots = qs.split(/\s+/).filter(Boolean);
+    l = NOMS.filter(n => { const a = sans(n); return mots.every(m => a.includes(m)); }).slice(0, 12).map(n => ({nom:n}));
+  }
+  let h = l.map((c, i) => `<button class="cli" data-i="${i}">📇<span>${esc(c.nom)}</span>${c.recent ? '<span class="r">récent</span>' : ""}</button>`).join("");
+  if (q && !NOMS.some(n => sans(n) === qs)) h += `<button class="cli" data-libre="1">➕<span>« ${esc(q)} »<small>Nouveau client (pas dans Bexio) : noter avec ce nom</small></span></button>`;
+  $("#liste").innerHTML = h || '<div class="vide">Aucun client trouvé.</div>';
+  $("#liste").querySelectorAll("[data-i]").forEach(b => b.onclick = () => choisir(l[+b.dataset.i]));
+  const lb = $("#liste").querySelector("[data-libre]"); if (lb) lb.onclick = () => choisir({nom:q, nouveau:true});
+}
+function choisir(c){
+  CHOIX = c; $("#zoneChoix").style.display = "none"; const z = $("#zoneChoisi"); z.style.display = "";
+  z.innerHTML = `<div class="choisi">✔<span>${esc(c.nom)}${c.nouveau ? "<small>nouveau client</small>" : ""}</span><button id="changer">Changer</button></div>`;
+  $("#changer").onclick = () => { CHOIX = null; z.style.display = "none"; $("#zoneChoix").style.display = ""; $("#q").focus(); };
+}
+$("#q").addEventListener("input", dessiner);
+$("#types").querySelectorAll("[data-t]").forEach(b => b.onclick = () => { TYPE = b.dataset.t; $("#types").querySelectorAll("[data-t]").forEach(x => x.classList.toggle("on", x === b)); });
+$("#arret").onclick = () => { ARRET = !ARRET; $("#arret").classList.toggle("on", ARRET); };
+dessiner();
+
+// ---- Firebase (même compte que Pointage MTS) : l'appel est gardé sur le téléphone puis envoyé dès qu'il y a du réseau
+const FIREBASE_CONFIG = { apiKey:"AIzaSyCcc8z9UeLT-Sb9wKAJ6zE_VAQG-u41L5E", authDomain:"pointage-mts.firebaseapp.com", projectId:"pointage-mts",
+  storageBucket:"pointage-mts.firebasestorage.app", messagingSenderId:"621353453478", appId:"1:621353453478:web:4ab9f398e82cfc546f3167" };
+let F = null, fs = null, auth = null, uid = null, enAttente = false;
+function etat(t, cl){ const e = $("#etat"); e.textContent = t; e.className = "etat " + (cl || ""); }
+function majEtat(){ etat(!uid ? "Pas connecté" : enAttente ? "⏳ Appel(s) gardé(s) sur le téléphone : envoi dès qu'il y a du réseau" : "✓ Connecté · tout est envoyé", !uid ? "" : enAttente ? "att" : "ok"); }
+try {
+  F = await import("../firebase-bundle.js");
+  const app = F.initializeApp(FIREBASE_CONFIG);
+  fs = F.initializeFirestore(app, {localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
+  auth = F.getAuth(app);
+  F.onAuthStateChanged(auth, user => {
+    if (!user) { uid = null; $("#login").style.display = "block"; majEtat(); return; }
+    uid = user.uid; $("#login").style.display = "none"; majEtat();
+    F.onSnapshot(F.doc(fs, "users", uid, "state", "clients"), snap => { const d = snap.exists() ? snap.data() : null;
+      if (d && Array.isArray(d.noms) && d.noms.length > 20) { NOMS = d.noms; ecrire("mts_clients_officiels", d.noms); dessiner(); } }, () => {});
+    F.onSnapshot(F.doc(fs, "users", uid, "state", "appels"), {includeMetadataChanges:true}, snap => { enAttente = snap.metadata.hasPendingWrites; majEtat(); }, () => {});
+  });
+} catch(e) { etat("⚠ Connexion impossible pour le moment (réseau ?)"); }
+$("#login").addEventListener("submit", async ev => { ev.preventDefault(); $("#lErr").textContent = "Connexion…";
+  try { await F.signInWithEmailAndPassword(auth, $("#lEmail").value.trim(), $("#lPass").value); $("#lPass").value = ""; $("#lErr").textContent = ""; }
+  catch(err) { const c = err && err.code || ""; $("#lErr").textContent = c.includes("network") ? "Pas de réseau : la première connexion demande internet." : (c.includes("invalid") || c.includes("wrong") || c.includes("user-not-found")) ? "E-mail ou mot de passe incorrect." : "Connexion impossible (" + c + ")."; } });
+
+function noter(repondu){
+  $("#err").textContent = "";
+  if (!uid) { $("#err").textContent = "Connecte-toi d'abord (une seule fois)."; return; }
+  let c = CHOIX; const q = $("#q").value.trim();
+  if (!c && q) { const ex = NOMS.find(n => sans(n) === sans(q)); c = ex ? {nom:ex} : {nom:q, nouveau:true}; }
+  if (!c) { $("#err").textContent = "Choisis d'abord le client (ou tape son nom)."; $("#q").focus(); return; }
+  const id = nouvId();
+  const a = {uid:id, date:isoLocal(new Date()), client:c.nom, nouveau:!!c.nouveau, type:TYPE, etat:ARRET ? "Machine à l'arrêt" : "", commentaire:$("#txt").value.trim(), repondu:!!repondu};
+  F.setDoc(F.doc(fs, "users", uid, "state", "appels"), {items:{[id]:a}}, {merge:true}).catch(e => { $("#err").textContent = "⚠ Non enregistré (" + (e.code || e.message) + ")"; });
+  if (!c.nouveau) { const r = [c.nom, ...RECENTS.filter(n => n !== c.nom)].slice(0, 8); RECENTS.splice(0, RECENTS.length, ...r); ecrire("mts-appel-recents", r); }
+  $("#form").style.display = "none"; $("#fait").style.display = "block";
+  $("#faitT").textContent = repondu ? "Noté + répondu" : "Noté";
+  $("#faitP").textContent = c.nom + " · " + new Date().toTimeString().slice(0, 5) + (navigator.onLine ? "" : " · pas de réseau : envoi automatique plus tard");
+}
+$("#ok").onclick = () => noter(true);
+$("#ok2").onclick = () => noter(false);
+$("#encore").onclick = () => { CHOIX = null; TYPE = "Panne"; ARRET = false; $("#q").value = ""; $("#txt").value = "";
+  $("#types").querySelectorAll("[data-t]").forEach(x => x.classList.toggle("on", x.dataset.t === "Panne")); $("#arret").classList.remove("on");
+  $("#zoneChoisi").style.display = "none"; $("#zoneChoix").style.display = ""; $("#fait").style.display = "none"; $("#form").style.display = ""; dessiner(); };
+document.addEventListener("visibilitychange", () => { if (!document.hidden) heure(); });
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body></html>
