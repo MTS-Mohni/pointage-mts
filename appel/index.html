@@ -16,7 +16,7 @@ h1{font-size:21px;margin:4px 0 12px;display:flex;align-items:center;gap:8px}h1 .
 input,textarea{width:100%;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:18px;font-family:inherit}
 input:focus,textarea:focus{outline:2px solid var(--red);border-color:transparent}
 textarea{min-height:84px;resize:vertical}
-.liste{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:31vh;overflow:auto}
+.liste{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:38vh;overflow:auto;overscroll-behavior:contain}
 .cli{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:17px;text-align:left;color:var(--txt);width:100%}
 .cli small{display:block;color:var(--mut);font-size:13px}.cli .r{margin-left:auto;font-size:12px;color:var(--org);white-space:nowrap}
 .choisi{display:flex;align-items:center;gap:10px;background:#2a1712;border:1px solid var(--red);border-radius:12px;padding:12px 14px;font-size:18px;font-weight:600}
@@ -44,7 +44,7 @@ textarea{min-height:84px;resize:vertical}
     <input id="lEmail" type="email" value="info@mt-s.ch" autocomplete="username"><input id="lPass" type="password" placeholder="Mot de passe" autocomplete="current-password">
     <button class="gros" style="width:100%" type="submit">Se connecter</button><div class="err" id="lErr"></div></form>
 
-  <div class="lbl">Client</div>
+  <div class="lbl">Client <span id="nbCli"></span></div>
   <div id="zoneChoix">
     <input id="q" type="search" placeholder="Nom du client" autocomplete="off" autocapitalize="words" enterkeyhint="search">
     <div class="liste" id="liste"><div class="vide">Chargement des clients…</div></div>
@@ -91,13 +91,15 @@ heure(); setInterval(heure, 20000);
 function dessiner(){
   const q = $("#q").value.trim(), qs = sans(q);
   let l;
-  if (!q) {
-    l = RECENTS.slice(0, 6).map(n => ({nom:n, recent:true}));
-    if (!l.length) { $("#liste").innerHTML = '<div class="vide">' + (NOMS.length ? "Tapez les premières lettres du client." : "Liste des clients pas encore reçue : tapez le nom.") + '</div>'; return; }
+  if (!q) {   // sans recherche : les récents, puis tous les clients (A → Z)
+    const rec = RECENTS.slice(0, 6);
+    l = [...rec.map(n => ({nom:n, recent:true})), ...NOMS.filter(n => !rec.includes(n)).map(n => ({nom:n}))];
+    if (!l.length) { $("#liste").innerHTML = '<div class="vide">Liste des clients pas encore reçue (première connexion : il faut du réseau). Tapez le nom.</div>'; return; }
   } else {
     const mots = qs.split(/\s+/).filter(Boolean);
     l = NOMS.filter(n => { const a = sans(n); return mots.every(m => a.includes(m)); }).slice(0, 12).map(n => ({nom:n}));
   }
+  $("#nbCli").textContent = NOMS.length ? "(" + NOMS.length + ")" : "";
   let h = l.map((c, i) => `<button class="cli" data-i="${i}">📇<span>${esc(c.nom)}</span>${c.recent ? '<span class="r">récent</span>' : ""}</button>`).join("");
   if (q && !NOMS.some(n => sans(n) === qs)) h += `<button class="cli" data-libre="1">➕<span>« ${esc(q)} »<small>Nouveau client (pas dans Bexio) : noter avec ce nom</small></span></button>`;
   $("#liste").innerHTML = h || '<div class="vide">Aucun client trouvé.</div>';
